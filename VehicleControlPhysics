@@ -1,0 +1,147 @@
+using UnityEngine;
+using System.Collections;
+
+public class VehicleControlPhysics : MonoBehaviour {
+	
+	public WheelCollider frontWheel1;
+	public WheelCollider frontWheel2;
+	public WheelCollider rearWheel1;
+	public WheelCollider rearWheel2;
+	
+	public Transform wheelFL;
+	public Transform wheelFR;
+	public Transform wheelRL;
+	public Transform wheelRR;
+	
+	public float steer_max = 10;
+	public float motor_max = 2;
+	public float brake_max = 150;
+	//public float max_speed = 50;
+	//public AudioClip EngineSound;
+	public float EngineSoundVolume = 0.5f;
+	
+	//private AudioSource EngineAudio;
+	
+	public float steer = 0;
+	public float forward = 0;
+	public float back = 0;
+	public float motor = 0;
+	public float brake = 0;
+	public bool reverse = false;
+	public float speed = 0;
+	public bool MovementDirty {get; set;}
+	
+	// Initialization
+	void Start () 
+	{
+		rigidbody.centerOfMass = new Vector3(0f, -0.05f, 0f);
+		//motor = 100;
+	}
+	
+	void Update () 
+	{
+		EngineSound ();
+		//EngineAudio.pitch = Mathf.Abs(motor / motor_max);
+
+		if(Input.GetKeyDown(KeyCode.W))
+		{	
+		//EngineAudio.Play();	
+			
+		}
+		if (Input.GetKeyUp(KeyCode.W))
+		{
+			
+		//EngineAudio.Stop();
+		}
+
+		
+		if(Input.GetKeyDown(KeyCode.Space))//Reset car at current location
+		{
+			Vector3 temp = transform.forward;
+ 			transform.rotation = new Quaternion(0,temp.y,0,0);
+			transform.forward=temp;
+			transform.position = new Vector3 (transform.position.x,transform.position.y+4,transform.position.z);	
+		}
+		
+	}
+	
+	void FixedUpdate () 
+	{
+	
+		//speed = rigidbody.velocity.sqrMagnitude;
+		//speed = Mathf.Clamp(rigidbody.velocity.magnitude,0.0f,1.0f);
+
+		steer = Mathf.Clamp(Input.GetAxis("Horizontal"),-1f, 1f);
+		forward = Mathf.Clamp(Input.GetAxis("Joy3X"), 0f, 1.5f);	//Change "Joy3X" to "Vertical" for keyboard
+		back = -1f * Mathf.Clamp(Input.GetAxis("Joy3X"), -1f, 0f);	//Change "Joy3X" to "Vertical" for keyboard
+		
+		if(speed <= 1)
+		{
+			
+			if(back > 0)
+			{ 
+				reverse = true;
+			}
+			else if(forward > 0)
+			{
+
+				reverse = false;
+			}
+			//if(forward > 0) { reverse = false; }
+		}
+		
+		if(reverse) 
+		{
+			motor = -1 * back;
+			brake = forward;
+			//EngineAudio.pitch = Mathf.Abs(motor / motor_max) + 0.5f ;
+			//MovementDirty=true;
+			
+			//EngineAudio.pitch --;
+		}
+		else
+		{
+			
+			motor = forward;
+			brake = back;
+			//EngineAudio.pitch = Mathf.Abs(motor / motor_max) + 0.5f ;
+			//MovementDirty=true;
+			//EngineAudio.pitch ++;
+		}
+
+		// Torque for vehicle
+		rearWheel1.motorTorque = motor_max * motor;
+		rearWheel2.motorTorque = motor_max * motor;
+		
+		rearWheel1.brakeTorque = brake_max * brake;
+		rearWheel2.brakeTorque = brake_max * brake;
+		
+		// Steering
+		frontWheel1.steerAngle = steer_max * steer;
+		frontWheel2.steerAngle = steer_max * steer;
+		wheelFL.localEulerAngles = new Vector3(90, steer_max * steer * 1.5f, -90);
+		wheelFR.localEulerAngles = new Vector3(90, steer_max * steer * 1.5f, 90);
+
+		// ANIMATION
+		// Due to wheel orientations, the direction of rotation has to be 
+		// reversed for the right-hand wheels.
+		wheelFL.Rotate(0f, frontWheel1.rpm * 4f * Time.fixedTime, 0f);
+		wheelFR.Rotate(0f, frontWheel2.rpm * -4f * Time.fixedTime, 0f);
+		wheelRL.Rotate(0f, rearWheel1.rpm * 6f * Time.deltaTime, 0f);
+		wheelRR.Rotate(0f, rearWheel2.rpm * -6f * Time.deltaTime, 0f);
+	
+		
+	}
+
+	void EngineSound(){
+
+		audio.pitch = forward / 2.5f;
+
+	}
+
+
+}
+
+
+
+void VehicleDrift
